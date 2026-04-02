@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="environment">
+
+  <!-- Include macros -->
+  <xacro:include filename="$(find quest_control)/urdf/cube.xacro"/>
+  <xacro:include filename="$(find quest_control)/urdf/support.urdf.xacro"/>
+
+  <!-- Instantiate links -->
+  <xacro:support/>
+  <xacro:cube/>
+
+  <!-- Joint connecting cube to table (floating so it's pickable) -->
+  <joint name="table_to_cube" type="floating">
+    <parent link="table_desk"/>
+    <child link="cube_link"/>
+    <origin xyz="0.4 0.2 0.46" rpy="0 0 0 "/>
+  </joint>
+
+</robot>

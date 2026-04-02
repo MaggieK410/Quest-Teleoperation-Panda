@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="support" params="">
+    <link name="support_link">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            <mass value="1" />
+            <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001" />
+        </inertial>
+    </link>
+    <link name="table_desk">
+    <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        <mass value="1" />
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001" />
+    </inertial>
+    <visual>
+        <origin xyz="0 0 -0.44" rpy="0 0 0" />
+        <geometry>
+            <box size="1.384 0.854 0.88" />
+        </geometry>
+        <material name="brown">
+            <color rgba="0.43 0.34 0.24 0.9" />
+        </material>
+    </visual>
+    <collision>
+        <origin xyz="0 0 -0.44" rpy="0 0 0" />
+        <geometry>
+            <box size="1.384 0.854 0.88" />
+        </geometry>
+    </collision>
+    </link>
+
+    <joint name="table_main_link" type="fixed">
+        <origin rpy="0.0 -0.0 0.0" xyz="0.0 0.0 0.88" />
+        <parent link="support_link" />
+        <child link="table_desk" />
+    </joint>
+
+
+
+
+
+
+    <link name="robot_attachment_link" />
+    <joint name="support_joint" type="fixed">
+      <origin xyz="0.422 0.0 .92" rpy="0 0 ${pi}" />
+      <parent link="support_link" />
+      <child link="robot_attachment_link" />
+    </joint>
+  </xacro:macro>
+</robot>
