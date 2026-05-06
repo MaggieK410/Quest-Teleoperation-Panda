@@ -214,13 +214,13 @@ __marimo__/
 # See: https://github.com/github/gitignore/tree/main/Global
 #
 .utmp/
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
+My project (3)/[Ll]ibrary/
+My project (3)/[Tt]emp/
+My project (3)/[Oo]bj/
+My project (3)/[Bb]uild/
+My project (3)/[Bb]uilds/
+My project (3)/[Ll]ogs/
+My project (3)/[Uu]ser[Ss]ettings/
 *.log
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
@@ -312,3 +312,4 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+*.zip
