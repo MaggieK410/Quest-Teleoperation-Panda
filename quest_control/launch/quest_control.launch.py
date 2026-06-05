@@ -38,7 +38,8 @@ def launch_setup(
     )
 
 
-    franka_robot_launch = generate_include_launch("franka_common_lfc.launch.py")#, extra_launch_arguments={"rviz_config_path": rviz_config_path})
+    #franka_robot_launch = generate_include_launch("franka_common_lfc.launch.py")#, extra_launch_arguments={"rviz_config_path": rviz_config_path})
+    agimus_franka_robot_launch = generate_include_launch("franka_common_lfc.launch.py")#, extra_launch_arguments={"rviz_config_path": rviz_config_path})
     ocp_choice_arg = LaunchConfiguration("ocp")
     use_collision_detection = (
         context.perform_substitution(ocp_choice_arg).lower()
@@ -140,7 +141,7 @@ def launch_setup(
 
 
     return [
-        franka_robot_launch,
+        agimus_franka_robot_launch,
         wait_for_non_zero_joints_node,
         tf_node,
         RegisterEventHandler(

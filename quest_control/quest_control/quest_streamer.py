@@ -49,7 +49,7 @@ from agimus_demo_08_collision_avoidance.goal_publisher_parameters import (
     goal_publisher,
 )
 
-from quest_control.franka_gripper_client import FrankaGripperClient
+from quest_control.agimus_franka_gripper_client import FrankaGripperClient
 import threading
 #Visualization imports
 from visualization_msgs.msg import Marker
@@ -101,8 +101,8 @@ class QuestTrajectoryPublisher(TrajectoryPublisherBase):
         self.buffer=[]
 
         self.rotation=False #True
-
-        self.franka_gripper_client = FrankaGripperClient(self, arm_id="fer") #might have to be chnaged to fr3?
+        self.agimus_franka_gripper_client = FrankaGripperClient(self, arm_id="fer") #might have to be chnaged to fr3?
+        #self.franka_gripper_client = FrankaGripperClient(self, arm_id="fer") #might have to be chnaged to fr3?
         self.current_gripper_status = None
 
         self.currently_recording = False
@@ -436,9 +436,9 @@ class QuestTrajectoryPublisher(TrajectoryPublisherBase):
 
     def send_new_gripper_goal(self, close: bool) -> bool:
         if close:
-            return self.franka_gripper_client.grasp()
+            return self.agimus_franka_gripper_client.grasp()
         else:
-            return self.franka_gripper_client.send_goal(position=0.039, max_effort=10.0)
+            return self.agimus_franka_gripper_client.send_goal(position=0.039, max_effort=10.0)
     def decode_packet(self, data: bytes) -> VRFrame:
         floats = struct.unpack('<66f', data)
         f = iter(floats)
