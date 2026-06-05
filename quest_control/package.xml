@@ -2,15 +2,30 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>quest_control</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="gepetto@todo.todo">gepetto</maintainer>
-  <license>TODO: License declaration</license>
+  <version>0.1.0</version>
+  <description>Teleoperation on the Panda Robot with Quest 3</description>
+  <maintainer email="guilhem.saurel@laas.fr">Guilhem Saurel</maintainer>
+  <license>Apache-2.0</license>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
+
+  <depend>agimus_msgs</depend>
+  <depend>agimus_controller</depend>
+  <depend>agimus_demo_08_collision_avoidance</depend>
+  <depend>agimus_demos_common</depend>
+  <depend>agimus_franka_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>linear_feedback_controller_msgs</depend>
+  <depend>pinocchio</depend>
+  <depend>python3-numpy</depend>
+  <depend>python3-scipy</depend>
+  <depend>python3-h5py</depend>
+  <depend>python3-opencv</depend>
+  <!-- TODO: rosdep key ? <depend>python3-pyarrow</depend> -->
 
   <export>
     <build_type>ament_python</build_type>
