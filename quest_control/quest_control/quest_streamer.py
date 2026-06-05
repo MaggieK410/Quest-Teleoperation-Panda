@@ -119,11 +119,16 @@ class QuestTrajectoryPublisher(TrajectoryPublisherBase):
             .get_parameter_value()
             .string_value
         )
+        self.right_camera_path = self.declare_parameter("right_camera", "/dev/video6").get_parameter_value()
+        self.left_camera_path = self.declare_parameter("left_camera", "/dev/video8").get_parameter_value()
+
         self.hybrid_recorder = HybridRecorder(
             base_dir=os.path.expanduser(
                 "~/ros2_ws/src/Quest-Teleoperation-Panda/demos"
             ),
             task_name=self._task_name,
+            right_camera=self.right_camera_path,
+            left_camera_path=self.left_camera_path
         )
 
         self.ee_pose = None

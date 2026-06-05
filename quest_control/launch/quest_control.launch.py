@@ -52,6 +52,14 @@ def launch_setup(
             "agimus_control_params.yaml",
         ]
     )
+    
+    camera_config_yaml = PathJoinSubstitution(
+        [
+            FindPackageShare("quest_control"),
+            "config",
+            "camera_config.yaml",
+        ]
+    )
 
     if use_collision_detection:
         extra_params = {
@@ -91,6 +99,7 @@ def launch_setup(
         executable="quest_streamer",
         parameters=[
             get_use_sim_time(),
+            camera_config_yaml,
             {"task_name": LaunchConfiguration("task_name")},
         ],
         arguments=[],

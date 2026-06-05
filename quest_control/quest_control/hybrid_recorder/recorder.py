@@ -22,10 +22,6 @@ from .episode_writer import writer_process
 # Adapter /dev/video* si la disposition USB change (v4l2-ctl --list-devices)
 # ------------------------------------------------------------------ #
 
-ARDUCAM_CONFIGS = {
-    "exterior_1": {"device": "/dev/video0", "width": 640, "height": 480},
-    "exterior_2": {"device": "/dev/video2", "width": 640, "height": 480},
-}
 
 # Résolution D435 (couleur et profondeur)
 WRIST_RGB_W,   WRIST_RGB_H   = 640, 480
@@ -59,8 +55,15 @@ class HybridRecorder:
         task_name: str,
         arducam_configs: dict | None = None,
         wrist_serial: str | None = None,
+        left_camera_path: str | None=None,
+        right_camera_path: str | None=None,
         fps: int = 30,
     ):
+        ARDUCAM_CONFIGS = {
+            "exterior_1": {"device": right_camera_path, "width": 640, "height": 480},
+            "exterior_2": {"device": left_camera_path, "width": 640, "height": 480},
+        }
+
         self._base_dir = os.path.expanduser(os.path.join(base_dir, task_name))
         self._fps = fps
         self._recording = False
