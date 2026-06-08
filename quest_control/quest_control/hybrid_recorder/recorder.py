@@ -8,6 +8,7 @@ arrivent via Queue depuis le nœud ROS2. Le processus écrivain produit des
 
 IMPORTANT : instancier AVANT tout fork() dans le nœud ROS2 (i.e., dans __init__).
 """
+
 import multiprocessing as mp
 import os
 import time
@@ -24,7 +25,7 @@ from .episode_writer import writer_process
 
 
 # Résolution D435 (couleur et profondeur)
-WRIST_RGB_W,   WRIST_RGB_H   = 640, 480
+WRIST_RGB_W, WRIST_RGB_H = 640, 480
 WRIST_DEPTH_W, WRIST_DEPTH_H = 640, 480
 
 # None = premier D435 trouvé ; mettre le numéro de série pour fixer un device
@@ -55,8 +56,8 @@ class HybridRecorder:
         task_name: str,
         arducam_configs: dict | None = None,
         wrist_serial: str | None = None,
-        left_camera_path: str | None=None,
-        right_camera_path: str | None=None,
+        left_camera_path: str | None = None,
+        right_camera_path: str | None = None,
         fps: int = 30,
     ):
         ARDUCAM_CONFIGS = {
@@ -117,8 +118,12 @@ class HybridRecorder:
         for name, c in arducam_cfg.items():
             p = mp.Process(
                 target=arducam_producer,
-                args=(rgb_channels[name], c["device"],
-                      self._record_event, self._stop_event),
+                args=(
+                    rgb_channels[name],
+                    c["device"],
+                    self._record_event,
+                    self._stop_event,
+                ),
                 daemon=True,
                 name=f"producer_{name}",
             )
@@ -129,8 +134,7 @@ class HybridRecorder:
         serial = wrist_serial or WRIST_D435_SERIAL
         wrist_proc = mp.Process(
             target=d435_producer,
-            args=(wrist_rgb_ch, depth_ch, serial,
-                  self._record_event, self._stop_event),
+            args=(wrist_rgb_ch, depth_ch, serial, self._record_event, self._stop_event),
             daemon=True,
             name="producer_wrist_d435",
         )
@@ -140,8 +144,14 @@ class HybridRecorder:
         # --- Processus écrivain ---
         self._writer_proc = mp.Process(
             target=writer_process,
-            args=(self._channels, self._depth_ch, self._state_q,
-                  self._cmd_q, self._base_dir, self._fps),
+            args=(
+                self._channels,
+                self._depth_ch,
+                self._state_q,
+                self._cmd_q,
+                self._base_dir,
+                self._fps,
+            ),
             daemon=True,
             name="episode_writer",
         )
