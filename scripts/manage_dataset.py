@@ -15,6 +15,7 @@ The 'delete' command:
 Run with:
     ~/rerun_venv/bin/python scripts/manage_dataset.py <dataset_dir> ...
 """
+
 import json
 import os
 import sys
@@ -28,21 +29,27 @@ import pyarrow.parquet as pq
 # Helpers
 # ------------------------------------------------------------------ #
 
+
 def _data_dir(base: str) -> str:
     return os.path.join(base, "data", "chunk-000")
+
 
 def _video_dir(base: str) -> str:
     return os.path.join(base, "videos", "chunk-000")
 
+
 def _depth_dir(base: str, ep: int) -> str:
     return os.path.join(base, "depth", f"episode_{ep:06d}")
+
 
 def _parquet_path(base: str, ep: int) -> str:
     return os.path.join(_data_dir(base), f"episode_{ep:06d}.parquet")
 
+
 def _video_paths(base: str, ep: int) -> list[str]:
     pattern = os.path.join(_video_dir(base), f"*_episode_{ep:06d}.mp4")
     return glob.glob(pattern)
+
 
 def _existing_episodes(base: str) -> list[int]:
     """Return sorted list of episode indices that have a parquet file."""
@@ -53,10 +60,11 @@ def _existing_episodes(base: str) -> list[int]:
     for fn in os.listdir(d):
         if fn.endswith(".parquet"):
             try:
-                idxs.append(int(fn[len("episode_"):-len(".parquet")]))
+                idxs.append(int(fn[len("episode_") : -len(".parquet")]))
             except ValueError:
                 pass
     return sorted(idxs)
+
 
 def _parse_indices(tokens: list[str]) -> set[int]:
     """Parse ['3', '7', '11-14'] → {3, 7, 11, 12, 13, 14}."""
@@ -73,6 +81,7 @@ def _parse_indices(tokens: list[str]) -> set[int]:
 # ------------------------------------------------------------------ #
 # Status
 # ------------------------------------------------------------------ #
+
 
 def cmd_status(base: str) -> None:
     existing = _existing_episodes(base)
@@ -96,6 +105,7 @@ def cmd_status(base: str) -> None:
 # ------------------------------------------------------------------ #
 # Delete + compact
 # ------------------------------------------------------------------ #
+
 
 def cmd_delete(base: str, to_delete: set[int]) -> None:
     existing = _existing_episodes(base)
@@ -191,7 +201,9 @@ def cmd_delete(base: str, to_delete: set[int]) -> None:
         new_parquet = _parquet_path(base, new_idx)
         for v_old in _video_paths(base, old_idx):
             cam_key = os.path.basename(v_old).split(f"_episode_{old_idx:06d}")[0]
-            v_new = os.path.join(_video_dir(base), f"{cam_key}_episode_{new_idx:06d}.mp4")
+            v_new = os.path.join(
+                _video_dir(base), f"{cam_key}_episode_{new_idx:06d}.mp4"
+            )
             if v_old != v_new:
                 os.rename(v_old, v_new)
 
@@ -210,11 +222,14 @@ def cmd_delete(base: str, to_delete: set[int]) -> None:
                 os.remove(parquet_src)
 
         # -- update episode meta --
-        meta = episode_meta.get(old_idx, {
-            "tasks": [""],
-            "length": n_frames,
-            "success": True,
-        })
+        meta = episode_meta.get(
+            old_idx,
+            {
+                "tasks": [""],
+                "length": n_frames,
+                "success": True,
+            },
+        )
         meta["episode_index"] = new_idx
         meta["length"] = n_frames
         new_episodes_meta.append(meta)
@@ -243,6 +258,7 @@ def cmd_delete(base: str, to_delete: set[int]) -> None:
 # ------------------------------------------------------------------ #
 # Main
 # ------------------------------------------------------------------ #
+
 
 def main() -> None:
     if len(sys.argv) < 3:
