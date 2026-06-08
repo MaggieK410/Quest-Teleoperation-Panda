@@ -72,7 +72,7 @@ def main():
     data = load_episode(base_dir, ep_idx)
 
     timestamps = np.array(data["timestamp"])  # seconds from episode start
-    frame_indices = np.array(data["frame_index"])
+    # frame_indices = np.array(data["frame_index"])
 
     # Extract gripper_pos_l (first gripper finger, index 22 in observation.state)
     obs = np.array(data["observation.state"])  # shape (N, 25)

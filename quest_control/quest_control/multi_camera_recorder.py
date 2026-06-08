@@ -1,5 +1,4 @@
 import cv2
-import datetime
 import os
 
 
@@ -93,7 +92,7 @@ class MultiCameraRecorder:
                 return
 
             # add timestamp overlay
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            # timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
             # cv2.putText(
             #    frame,

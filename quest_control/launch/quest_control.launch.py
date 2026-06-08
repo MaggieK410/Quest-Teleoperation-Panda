@@ -29,13 +29,13 @@ def launch_setup(
 ) -> list[LaunchDescriptionEntity]:
     # print('----------------IN LAUNCH SETUP-------------------------')
 
-    rviz_config_path = PathJoinSubstitution(
-        [
-            FindPackageShare("quest_control"),
-            "rviz",
-            "config.rviz",
-        ]
-    )
+    # rviz_config_path = PathJoinSubstitution(
+    #     [
+    #         FindPackageShare("quest_control"),
+    #         "rviz",
+    #         "config.rviz",
+    #     ]
+    # )
 
     # franka_robot_launch = generate_include_launch("franka_common_lfc.launch.py")#, extra_launch_arguments={"rviz_config_path": rviz_config_path})
     agimus_franka_robot_launch = generate_include_launch(

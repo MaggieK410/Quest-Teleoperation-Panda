@@ -1,5 +1,4 @@
 import numpy as np
-import argparse
 import struct
 import socket
 from dataclasses import dataclass
@@ -9,35 +8,23 @@ import pinocchio as pin
 # rclpy imports
 import rclpy
 from rclpy.task import Future
-from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 
 
 # Imports needed to send things to the MPC controller
-from agimus_msgs.msg import MpcInput
-from std_msgs.msg import String
 from sensor_msgs.msg import JointState
-from linear_feedback_controller_msgs.msg import Sensor, Control
-from rclpy.node import Node
-from ament_index_python.packages import get_package_share_directory
+from linear_feedback_controller_msgs.msg import Control
 import os
-import copy
-import h5py
 
-import tf2_ros
 from geometry_msgs.msg import TransformStamped
 from tf2_ros import TransformBroadcaster
 
 # Imports needed to get robot params
-from agimus_controller.factory.robot_model import RobotModelParameters, RobotModels
 from agimus_controller_ros.simple_trajectory_publisher import TrajectoryPublisherBase
-from agimus_controller_ros.trajectory_weights_parameters import (
-    trajectory_weights_params,
-)
 from agimus_controller_ros.ros_utils import (
     weighted_traj_point_to_mpc_msg,
-    get_param_from_node,
 )
 from agimus_controller.trajectory import (
     TrajectoryPoint,
@@ -45,9 +32,6 @@ from agimus_controller.trajectory import (
     WeightedTrajectoryPoint,
 )
 
-from agimus_demo_08_collision_avoidance.goal_publisher_parameters import (
-    goal_publisher,
-)
 
 from quest_control.agimus_franka_gripper_client import FrankaGripperClient
 import threading
@@ -55,14 +39,12 @@ import threading
 # Visualization imports
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import ColorRGBA, Header, Int32
+from std_msgs.msg import ColorRGBA, Header
 from rclpy.duration import Duration
 
 
 import datetime
 import time
-import cv2
-import threading
 from quest_control.hybrid_recorder import HybridRecorder
 
 
@@ -393,7 +375,7 @@ class QuestTrajectoryPublisher(TrajectoryPublisherBase):
             # make sure we have a self ee pose
             return None
 
-        current_timestep = (datetime.datetime.now() - timestep).total_seconds()
+        # current_timestep = (datetime.datetime.now() - timestep).total_seconds()
 
         data = pin.Data(self.robot_models.robot_model)
         pin.forwardKinematics(self.robot_models.robot_model, data, self.current_q)
@@ -408,28 +390,28 @@ class QuestTrajectoryPublisher(TrajectoryPublisherBase):
         ee_to_base = data.oMf[base_id].inverse() * ee_to_world
 
         # Positions
-        base_position_absolute = base_to_world.translation
+        _base_position_absolute = base_to_world.translation
 
-        ee_position_absolute = ee_to_world.translation
-        ee_posisiton_relative = ee_to_base.translation  # data.oMf[ee_id].translation
+        _ee_position_absolute = ee_to_world.translation
+        _ee_posisiton_relative = ee_to_base.translation  # data.oMf[ee_id].translation
 
         # Rotations
-        ee_rotation_absolute = pin.Quaternion(
+        _ee_rotation_absolute = pin.Quaternion(
             ee_to_world.rotation
         ).coeffs()  # xyzw, verify this for other libraries
-        ee_rotation_relative = pin.Quaternion(ee_to_base.rotation).coeffs()
+        _ee_rotation_relative = pin.Quaternion(ee_to_base.rotation).coeffs()
 
-        base_rotation_absolute = pin.Quaternion(base_to_world.rotation).coeffs()
+        _base_rotation_absolute = pin.Quaternion(base_to_world.rotation).coeffs()
 
         # Gripper qpos, qvel
         gripper_indices = [
             self.joint_states.name.index("fer_finger_joint1"),
             self.joint_states.name.index("fer_finger_joint2"),
         ]
-        gripper_qpos = np.array(
+        _gripper_qpos = np.array(
             [self.joint_states.position[i] for i in gripper_indices]
         )
-        gripper_qvel = np.array(
+        _gripper_qvel = np.array(
             [self.joint_states.velocity[i] for i in gripper_indices]
         )
 
@@ -446,11 +428,11 @@ class QuestTrajectoryPublisher(TrajectoryPublisherBase):
         joint_positions = np.array(
             [self.joint_states.position[i] for i in joint_indices]
         )
-        joint_velocities = np.array(
+        _joint_velocities = np.array(
             [self.joint_states.velocity[i] for i in joint_indices]
         )
-        joint_pos_cos = np.cos(joint_positions)
-        joint_pos_sin = np.sin(joint_positions)
+        _joint_pos_cos = np.cos(joint_positions)
+        _joint_pos_sin = np.sin(joint_positions)
 
         # Package observations, these are later used to make actions from them
         """
@@ -546,7 +528,7 @@ class QuestTrajectoryPublisher(TrajectoryPublisherBase):
         if self.current_q is None:
             self.get_logger().info("Returned, no current q")
             return
-        if self.latest_data != None:  # try:
+        if self.latest_data is not None:  # try:
             # data, addr = self.sock.recvfrom(4096)
             # frame = self.decode_packet(data)
 
@@ -598,7 +580,7 @@ class QuestTrajectoryPublisher(TrajectoryPublisherBase):
 
             # This will throw an error because the current q is not an SE3 element
             # self.buffer.append(self.current_q)
-            quat_repr = pin.XYZQUATToSE3(self.current_q)
+            # quat_repr = pin.XYZQUATToSE3(self.current_q)
             self.publish_buffer()
             return
 
@@ -629,7 +611,7 @@ class QuestTrajectoryPublisher(TrajectoryPublisherBase):
             ]
         )
 
-        Tq = self.latest_data.right_pose.matrix
+        # Tq = self.latest_data.right_pose.matrix
         # Tq0 = self.quest_ref
 
         # delta quest movement

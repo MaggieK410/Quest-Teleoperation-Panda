@@ -39,7 +39,6 @@ import time
 import numpy as np
 import multiprocessing as mp
 
-from .frame_channel import FrameChannel
 
 _STATE_DIM = 25
 _ACTION_DIM = 15  # 3 + 4 + 1 + 7

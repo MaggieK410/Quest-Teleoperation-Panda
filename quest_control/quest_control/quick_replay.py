@@ -3,7 +3,6 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-import time
 
 
 class TrajectoryReplay(Node):
