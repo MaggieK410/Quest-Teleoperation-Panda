@@ -12,6 +12,8 @@
 
   <depend>agimus_msgs</depend>
   <depend>agimus_controller</depend>
+  <depend>agimus_controller_ros</depend>
+  <depend>agimus_demo_03_mpc_dummy_traj</depend>
   <depend>agimus_demo_08_collision_avoidance</depend>
   <depend>agimus_demos_common</depend>
   <depend>agimus_franka_msgs</depend>
