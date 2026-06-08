@@ -13,6 +13,22 @@ jobs:
           # - {ROS_DISTRO: jazzy}
           # - {ROS_DISTRO: kilted}
           # - {ROS_DISTRO: rolling}
+    env:
+      ROSDEP_SKIP_KEYS: "agimus_demo_04_dual_arm_tiago_pro agimus_demo_09_glue_spreading"
+      UPSTREAM_WORKSPACE: |
+        github:agimus-project/agimus-controller#main
+        github:agimus-project/agimus-demos#main
+        github:agimus-project/agimus-libfranka-common#main
+        github:agimus-project/agimus-libfranka#main
+        github:agimus-project/agimus-franka-description#main
+        github:agimus-project/agimus-franka-ros2#main
+        github:agimus-project/agimus-franka-ros2#main
+        github:agimus-project/agimus-msgs#main
+        github:agimus-project/agimus_pytroller#main
+        github:agimus-project/colmpc#main
+        github:nim65s/ros2_net_ft_driver#humble
+        github:gepetto/example-robot-data#devel
+        github:machines-in-motion/mim_solvers#devel
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
