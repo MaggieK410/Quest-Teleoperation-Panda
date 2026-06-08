@@ -10,6 +10,7 @@ descriptors de la Queue et le mapping SHM sont hérités après fork().
 Producteur : écrit dans write(frame, t_ns).
 Consommateur : récupère via drain() → [(t_ns, frame), ...].
 """
+
 import queue as _queue
 import multiprocessing as mp
 import numpy as np
@@ -19,8 +20,9 @@ RING_SLOTS = 16  # fenêtre de buffering (~0.5 s à 30 fps)
 
 
 class FrameChannel:
-    def __init__(self, name: str, height: int, width: int,
-                 channels: int = 3, dtype=np.uint8):
+    def __init__(
+        self, name: str, height: int, width: int, channels: int = 3, dtype=np.uint8
+    ):
         self.name = name
         self.height = height
         self.width = width
@@ -48,8 +50,9 @@ class FrameChannel:
         """Écrire une frame dans l'anneau. Supprime la plus ancienne si plein."""
         slot = self._seq % self._n
         shape = (self.height, self.width, self.channels)
-        dst = np.ndarray(shape, dtype=self.dtype,
-                         buffer=self._shm.buf, offset=slot * self._nbytes)
+        dst = np.ndarray(
+            shape, dtype=self.dtype, buffer=self._shm.buf, offset=slot * self._nbytes
+        )
         np.copyto(dst, frame)
 
         try:
@@ -83,9 +86,12 @@ class FrameChannel:
         out = []
         for _seq, t_cap_ns, slot in pending:
             shape = (self.height, self.width, self.channels)
-            arr = np.ndarray(shape, dtype=self.dtype,
-                             buffer=self._shm.buf,
-                             offset=slot * self._nbytes).copy()
+            arr = np.ndarray(
+                shape,
+                dtype=self.dtype,
+                buffer=self._shm.buf,
+                offset=slot * self._nbytes,
+            ).copy()
             out.append((t_cap_ns, arr))
         return out
 

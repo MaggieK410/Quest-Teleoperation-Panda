@@ -9,6 +9,7 @@ Quand record_event n'est pas activé : on capture quand même (pour garder
 la caméra chaude et éviter le délai de réouverture) mais on flush sans écrire.
 Quand stop_event est activé : le processus se termine.
 """
+
 import time
 import numpy as np
 import multiprocessing as mp
@@ -24,6 +25,7 @@ def _ts_ns() -> int:
 # Producteur Arducam (V4L2)
 # ------------------------------------------------------------------ #
 
+
 def arducam_producer(
     channel: FrameChannel,
     device: str,
@@ -37,7 +39,8 @@ def arducam_producer(
     # OpenCV's translation layer maps to wrong values, so set directly via v4l2-ctl.
     subprocess.run(
         ["v4l2-ctl", "-d", device, "--set-ctrl=auto_exposure=0"],
-        check=False, capture_output=True,
+        check=False,
+        capture_output=True,
     )
 
     cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
@@ -79,6 +82,7 @@ def arducam_producer(
 # Producteur D435 (wrist camera — RGB + depth)
 # ------------------------------------------------------------------ #
 
+
 def d435_producer(
     rgb_channel: FrameChannel,
     depth_channel: "FrameChannel | None",
@@ -95,8 +99,9 @@ def d435_producer(
     Fallback sur cv2 si pyrealsense2 échoue (RGB seulement via /dev/video8).
     """
     try:
-        _d435_realsense(rgb_channel, depth_channel, device_serial,
-                        record_event, stop_event)
+        _d435_realsense(
+            rgb_channel, depth_channel, device_serial, record_event, stop_event
+        )
     except ImportError:
         print(
             "[d435_producer] pyrealsense2 absent → fallback cv2 (RGB seulement).\n"
@@ -104,8 +109,10 @@ def d435_producer(
         )
         _d435_cv2_fallback(rgb_channel, record_event, stop_event)
     except Exception as e:
-        print(f"[d435_producer] Erreur RealSense : {e}\n"
-              f"    → fallback cv2 (RGB seulement)")
+        print(
+            f"[d435_producer] Erreur RealSense : {e}\n"
+            f"    → fallback cv2 (RGB seulement)"
+        )
         _d435_cv2_fallback(rgb_channel, record_event, stop_event)
 
 
@@ -117,11 +124,13 @@ def _d435_realsense(rgb_ch, depth_ch, serial, record_event, stop_event):
     if serial:
         config.enable_device(serial)
 
-    config.enable_stream(rs.stream.color, rgb_ch.width, rgb_ch.height,
-                         rs.format.rgb8, 30)
+    config.enable_stream(
+        rs.stream.color, rgb_ch.width, rgb_ch.height, rs.format.rgb8, 30
+    )
     if depth_ch is not None:
-        config.enable_stream(rs.stream.depth, depth_ch.width, depth_ch.height,
-                             rs.format.z16, 30)
+        config.enable_stream(
+            rs.stream.depth, depth_ch.width, depth_ch.height, rs.format.z16, 30
+        )
 
     profile = pipeline.start(config)
 
