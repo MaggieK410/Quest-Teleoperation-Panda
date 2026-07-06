@@ -13,6 +13,7 @@ Displays:
     - Action: EE target and gripper command
     - Depth frames (if available)
 """
+
 import sys
 import os
 import numpy as np
@@ -23,21 +24,48 @@ import rerun.blueprint as rrb
 
 
 _STATE_NAMES = [
-    "joint_pos_1", "joint_pos_2", "joint_pos_3", "joint_pos_4",
-    "joint_pos_5", "joint_pos_6", "joint_pos_7",
-    "joint_vel_1", "joint_vel_2", "joint_vel_3", "joint_vel_4",
-    "joint_vel_5", "joint_vel_6", "joint_vel_7",
-    "ee_pos_x", "ee_pos_y", "ee_pos_z",
-    "ee_quat_x", "ee_quat_y", "ee_quat_z", "ee_quat_w",
-    "gripper_pos_l", "gripper_pos_r",
-    "gripper_vel_l", "gripper_vel_r",
+    "joint_pos_1",
+    "joint_pos_2",
+    "joint_pos_3",
+    "joint_pos_4",
+    "joint_pos_5",
+    "joint_pos_6",
+    "joint_pos_7",
+    "joint_vel_1",
+    "joint_vel_2",
+    "joint_vel_3",
+    "joint_vel_4",
+    "joint_vel_5",
+    "joint_vel_6",
+    "joint_vel_7",
+    "ee_pos_x",
+    "ee_pos_y",
+    "ee_pos_z",
+    "ee_quat_x",
+    "ee_quat_y",
+    "ee_quat_z",
+    "ee_quat_w",
+    "gripper_pos_l",
+    "gripper_pos_r",
+    "gripper_vel_l",
+    "gripper_vel_r",
 ]
 _ACTION_NAMES = [
-    "action_ee_pos_x", "action_ee_pos_y", "action_ee_pos_z",
-    "action_ee_quat_x", "action_ee_quat_y", "action_ee_quat_z", "action_ee_quat_w",
+    "action_ee_pos_x",
+    "action_ee_pos_y",
+    "action_ee_pos_z",
+    "action_ee_quat_x",
+    "action_ee_quat_y",
+    "action_ee_quat_z",
+    "action_ee_quat_w",
     "action_gripper_cmd",
-    "torque_j1", "torque_j2", "torque_j3", "torque_j4",
-    "torque_j5", "torque_j6", "torque_j7",
+    "torque_j1",
+    "torque_j2",
+    "torque_j3",
+    "torque_j4",
+    "torque_j5",
+    "torque_j6",
+    "torque_j7",
 ]
 
 
@@ -78,15 +106,15 @@ def main():
         sys.exit(1)
 
     base_dir = os.path.expanduser(sys.argv[1])
-    ep_idx   = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+    ep_idx = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 
     print(f"Loading episode {ep_idx} from {base_dir} …")
     data = load_episode(base_dir, ep_idx)
 
-    timestamps  = np.array(data["timestamp"], dtype=np.float64)   # s from ep start
-    obs_state   = np.array(data["observation.state"])              # (N, 25)
-    actions     = np.array(data["action"])                         # (N, 15)
-    n_rows      = len(timestamps)
+    timestamps = np.array(data["timestamp"], dtype=np.float64)  # s from ep start
+    obs_state = np.array(data["observation.state"])  # (N, 25)
+    actions = np.array(data["action"])  # (N, 15)
+    n_rows = len(timestamps)
 
     # --- Blueprint: cameras on top row, scalar plots on bottom ---
     video_dir = os.path.join(base_dir, "videos", "chunk-000")
@@ -96,14 +124,16 @@ def main():
         if f.endswith(f"_episode_{ep_idx:06d}.mp4")
     )
 
-    camera_views = [rrb.Spatial2DView(name=c, origin=f"/cameras/{c}") for c in cam_names]
+    camera_views = [
+        rrb.Spatial2DView(name=c, origin=f"/cameras/{c}") for c in cam_names
+    ]
     blueprint = rrb.Blueprint(
         rrb.Vertical(
             rrb.Horizontal(*camera_views, column_shares=[1] * len(camera_views)),
             rrb.Horizontal(
-                rrb.TimeSeriesView(name="EE position",  origin="/robot/ee_pos"),
-                rrb.TimeSeriesView(name="Gripper",      origin="/robot/gripper"),
-                rrb.TimeSeriesView(name="Joint pos",    origin="/robot/joint_pos"),
+                rrb.TimeSeriesView(name="EE position", origin="/robot/ee_pos"),
+                rrb.TimeSeriesView(name="Gripper", origin="/robot/gripper"),
+                rrb.TimeSeriesView(name="Joint pos", origin="/robot/joint_pos"),
             ),
             row_shares=[3, 2],
         ),
@@ -119,7 +149,7 @@ def main():
         t = float(timestamps[i])
         rr.set_time("time", timestamp=t)
 
-        state  = obs_state[i]
+        state = obs_state[i]
         action = actions[i]
 
         # EE position (world frame)
@@ -133,13 +163,13 @@ def main():
         rr.log("robot/ee_target/z", rr.Scalars(float(action[2])))
 
         # Gripper
-        rr.log("robot/gripper/pos_l",   rr.Scalars(float(state[22])))
-        rr.log("robot/gripper/pos_r",   rr.Scalars(float(state[23])))
+        rr.log("robot/gripper/pos_l", rr.Scalars(float(state[22])))
+        rr.log("robot/gripper/pos_r", rr.Scalars(float(state[23])))
         rr.log("robot/gripper/command", rr.Scalars(float(action[7])))
 
         # Joint positions
         for j in range(7):
-            rr.log(f"robot/joint_pos/j{j+1}", rr.Scalars(float(state[j])))
+            rr.log(f"robot/joint_pos/j{j + 1}", rr.Scalars(float(state[j])))
 
     # --- Log camera frames ---
     for cam in cam_names:

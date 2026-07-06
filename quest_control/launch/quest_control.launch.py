@@ -27,7 +27,7 @@ from agimus_demos_common.static_transform_publisher_node import (
 def launch_setup(
     context: LaunchContext, *args, **kwargs
 ) -> list[LaunchDescriptionEntity]:
-    #print('----------------IN LAUNCH SETUP-------------------------')
+    # print('----------------IN LAUNCH SETUP-------------------------')
 
     rviz_config_path = PathJoinSubstitution(
         [
@@ -37,9 +37,10 @@ def launch_setup(
         ]
     )
 
-
-    #franka_robot_launch = generate_include_launch("franka_common_lfc.launch.py")#, extra_launch_arguments={"rviz_config_path": rviz_config_path})
-    agimus_franka_robot_launch = generate_include_launch("franka_common_lfc.launch.py")#, extra_launch_arguments={"rviz_config_path": rviz_config_path})
+    # franka_robot_launch = generate_include_launch("franka_common_lfc.launch.py")#, extra_launch_arguments={"rviz_config_path": rviz_config_path})
+    agimus_franka_robot_launch = generate_include_launch(
+        "franka_common_lfc.launch.py"
+    )  # , extra_launch_arguments={"rviz_config_path": rviz_config_path})
     ocp_choice_arg = LaunchConfiguration("ocp")
     use_collision_detection = (
         context.perform_substitution(ocp_choice_arg).lower()
@@ -53,7 +54,7 @@ def launch_setup(
             "agimus_control_params.yaml",
         ]
     )
-    
+
     camera_config_yaml = PathJoinSubstitution(
         [
             FindPackageShare("quest_control"),
@@ -70,16 +71,15 @@ def launch_setup(
         }
     else:
         extra_params = {}
-    
-    
+
     wait_for_non_zero_joints_node = Node(
         package="agimus_demos_common",
         executable="wait_for_non_zero_joints_node",
         parameters=[get_use_sim_time()],
         output="screen",
-    )  
+    )
 
-    #I dont actually get this node. What does an MPC input look like? I will try LFC directly and do IK myself 
+    # I dont actually get this node. What does an MPC input look like? I will try LFC directly and do IK myself
     agimus_controller_node = Node(
         package="agimus_controller_ros",
         executable="agimus_controller_node",
@@ -93,7 +93,6 @@ def launch_setup(
         output="screen",
         remappings=[("robot_description", "robot_description_with_collision")],
     )
-
 
     simple_trajectory_publisher_node = Node(
         package="quest_control",
@@ -114,9 +113,11 @@ def launch_setup(
                 " ",
                 PathJoinSubstitution(
                     [
-                        FindPackageShare("agimus_demo_03_mpc_dummy_traj"), #agimus_demo_03_mpc_dummy_traj
+                        FindPackageShare(
+                            "agimus_demo_03_mpc_dummy_traj"
+                        ),  # agimus_demo_03_mpc_dummy_traj
                         "urdf",
-                        "obstacles.xacro", #envrionmenturdf.xacro
+                        "obstacles.xacro",  # envrionmenturdf.xacro
                     ]
                 ),
                 # Convert dict to list of parameters
@@ -137,8 +138,6 @@ def launch_setup(
         frame_id="fer_link0",
         child_frame_id="obstacle1",
     )
-
-
 
     return [
         agimus_franka_robot_launch,
@@ -164,35 +163,36 @@ def launch_setup(
         ),
     ]
 
-
-    #This would work if Agimus would not want to have a weird collision thingy
-    #return [
-    #franka_robot_launch,
-    #wait_for_non_zero_joints_node,
-    #agimus_controller_node,
-    #simple_trajectory_publisher_node,
-    #]
-#[
-        #franka_robot_launch,
-        #wait_for_non_zero_joints_node,
-        #RegisterEventHandler(
-        #    event_handler=OnProcessExit(
-        #        target_action=wait_for_non_zero_joints_node,
-        #        on_exit=[agimus_controller_node],
-        #    )
-        #),
-        #RegisterEventHandler(
-        #    event_handler=OnProcessStart(
-        #        target_action=agimus_controller_node,
-        #        on_start=TimerAction(
-        #            period=5.0,
-        #            actions=[simple_trajectory_publisher_node],
-        #        ),
-        #    )
-        #),
+    # This would work if Agimus would not want to have a weird collision thingy
+    # return [
+    # franka_robot_launch,
+    # wait_for_non_zero_joints_node,
+    # agimus_controller_node,
+    # simple_trajectory_publisher_node,
+    # ]
 
 
-    #]
+# [
+# franka_robot_launch,
+# wait_for_non_zero_joints_node,
+# RegisterEventHandler(
+#    event_handler=OnProcessExit(
+#        target_action=wait_for_non_zero_joints_node,
+#        on_exit=[agimus_controller_node],
+#    )
+# ),
+# RegisterEventHandler(
+#    event_handler=OnProcessStart(
+#        target_action=agimus_controller_node,
+#        on_start=TimerAction(
+#            period=5.0,
+#            actions=[simple_trajectory_publisher_node],
+#        ),
+#    )
+# ),
+
+
+# ]
 
 
 def generate_launch_description():
@@ -220,4 +220,4 @@ def generate_launch_description():
         + [OpaqueFunction(function=launch_setup)]
     )
 
-    #return LaunchDescription(generate_default_franka_args() + [OpaqueFunction(function=launch_setup)])
+    # return LaunchDescription(generate_default_franka_args() + [OpaqueFunction(function=launch_setup)])
