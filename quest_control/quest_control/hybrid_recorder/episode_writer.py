@@ -29,6 +29,7 @@ action             (15 dims) = action_ee_pos(3) + action_ee_quat(4)
 
 Pour H.264 propre : pip install av
 """
+
 import json
 import os
 import queue as _queue
@@ -38,27 +39,53 @@ import time
 import numpy as np
 import multiprocessing as mp
 
-from .frame_channel import FrameChannel
 
-_STATE_DIM  = 25
-_ACTION_DIM = 15   # 3 + 4 + 1 + 7
+_STATE_DIM = 25
+_ACTION_DIM = 15  # 3 + 4 + 1 + 7
 
 _STATE_NAMES = [
-    "joint_pos_1", "joint_pos_2", "joint_pos_3", "joint_pos_4",
-    "joint_pos_5", "joint_pos_6", "joint_pos_7",
-    "joint_vel_1", "joint_vel_2", "joint_vel_3", "joint_vel_4",
-    "joint_vel_5", "joint_vel_6", "joint_vel_7",
-    "ee_pos_x", "ee_pos_y", "ee_pos_z",
-    "ee_quat_x", "ee_quat_y", "ee_quat_z", "ee_quat_w",
-    "gripper_pos_l", "gripper_pos_r",
-    "gripper_vel_l", "gripper_vel_r",
+    "joint_pos_1",
+    "joint_pos_2",
+    "joint_pos_3",
+    "joint_pos_4",
+    "joint_pos_5",
+    "joint_pos_6",
+    "joint_pos_7",
+    "joint_vel_1",
+    "joint_vel_2",
+    "joint_vel_3",
+    "joint_vel_4",
+    "joint_vel_5",
+    "joint_vel_6",
+    "joint_vel_7",
+    "ee_pos_x",
+    "ee_pos_y",
+    "ee_pos_z",
+    "ee_quat_x",
+    "ee_quat_y",
+    "ee_quat_z",
+    "ee_quat_w",
+    "gripper_pos_l",
+    "gripper_pos_r",
+    "gripper_vel_l",
+    "gripper_vel_r",
 ]
 _ACTION_NAMES = [
-    "ee_pos_x", "ee_pos_y", "ee_pos_z",
-    "ee_quat_x", "ee_quat_y", "ee_quat_z", "ee_quat_w",
+    "ee_pos_x",
+    "ee_pos_y",
+    "ee_pos_z",
+    "ee_quat_x",
+    "ee_quat_y",
+    "ee_quat_z",
+    "ee_quat_w",
     "gripper_cmd",
-    "torque_j1", "torque_j2", "torque_j3", "torque_j4",
-    "torque_j5", "torque_j6", "torque_j7",
+    "torque_j1",
+    "torque_j2",
+    "torque_j3",
+    "torque_j4",
+    "torque_j5",
+    "torque_j6",
+    "torque_j7",
 ]
 
 
@@ -66,9 +93,11 @@ _ACTION_NAMES = [
 # Encodeur vidéo (PyAV si dispo, sinon cv2 VideoWriter)
 # ------------------------------------------------------------------ #
 
+
 def _try_import_av():
     try:
         import av
+
         return av
     except ImportError:
         return None
@@ -90,6 +119,7 @@ class _VideoEncoder:
             self._cv_writer = None
         else:
             import cv2
+
             self._av = None
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             self._cv_writer = cv2.VideoWriter(path, fourcc, fps, (width, height))
@@ -102,6 +132,7 @@ class _VideoEncoder:
                 self._container.mux(pkt)
         else:
             import cv2
+
             self._cv_writer.write(cv2.cvtColor(rgb_hwc, cv2.COLOR_RGB2BGR))
         self._idx += 1
 
@@ -120,8 +151,8 @@ def _trim_video_cv2(src: str, dst: str, n_keep: int, cv2) -> bool:
     if not cap.isOpened():
         return False
     fps = cap.get(cv2.CAP_PROP_FPS) or 30
-    w   = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    h   = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     out = cv2.VideoWriter(dst, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
     written = 0
     while written < n_keep:
@@ -138,6 +169,7 @@ def _trim_video_cv2(src: str, dst: str, n_keep: int, cv2) -> bool:
 # ------------------------------------------------------------------ #
 # Session d'enregistrement
 # ------------------------------------------------------------------ #
+
 
 class _RecordingSession:
     """Accumule toutes les données d'un épisode en cours."""
@@ -210,14 +242,16 @@ class _RecordingSession:
           + action_joint_torques(7)  ← feedforward Crocoddyl
         """
         try:
-            obs = np.concatenate([
-                np.asarray(s["joint_pos"]).ravel(),          # 7
-                np.asarray(s["joint_vel"]).ravel(),          # 7
-                np.asarray(s["ee_pos"]).ravel(),             # 3
-                np.asarray(s["ee_quat"]).ravel(),            # 4
-                np.asarray(s["gripper_pos"]).ravel(),        # 2
-                np.asarray(s["gripper_vel"]).ravel(),        # 2
-            ]).astype(np.float32)
+            obs = np.concatenate(
+                [
+                    np.asarray(s["joint_pos"]).ravel(),  # 7
+                    np.asarray(s["joint_vel"]).ravel(),  # 7
+                    np.asarray(s["ee_pos"]).ravel(),  # 3
+                    np.asarray(s["ee_quat"]).ravel(),  # 4
+                    np.asarray(s["gripper_pos"]).ravel(),  # 2
+                    np.asarray(s["gripper_vel"]).ravel(),  # 2
+                ]
+            ).astype(np.float32)
 
             # Torques feedforward Crocoddyl (zeros si non disponibles)
             torques_raw = s.get("action_joint_torques", None)
@@ -228,12 +262,14 @@ class _RecordingSession:
             else:
                 torques = np.zeros(7, dtype=np.float32)
 
-            act = np.concatenate([
-                np.asarray(s["action_ee_pos"]).ravel(),      # 3
-                np.asarray(s["action_ee_quat"]).ravel(),     # 4
-                [float(s["action_gripper_cmd"])],             # 1
-                torques,                                      # 7
-            ]).astype(np.float32)
+            act = np.concatenate(
+                [
+                    np.asarray(s["action_ee_pos"]).ravel(),  # 3
+                    np.asarray(s["action_ee_quat"]).ravel(),  # 4
+                    [float(s["action_gripper_cmd"])],  # 1
+                    torques,  # 7
+                ]
+            ).astype(np.float32)
 
         except (KeyError, ValueError, TypeError):
             return None
@@ -260,7 +296,9 @@ class _RecordingSession:
             return []
 
         video_ts = np.array(self.frame_timestamps[ref_name], dtype=np.int64)
-        state_ts = np.array([r["timestamp_ns"] for r in self.state_rows], dtype=np.int64)
+        state_ts = np.array(
+            [r["timestamp_ns"] for r in self.state_rows], dtype=np.int64
+        )
         t0_ns = video_ts[0]
         n = len(video_ts)
 
@@ -272,16 +310,18 @@ class _RecordingSession:
                 continue
             obs_state, action = result
 
-            rows.append({
-                "timestamp":     float(t_vid - t0_ns) * 1e-9,
-                "frame_index":   frame_i,
-                "episode_index": ep_idx,
-                "index":         self._global_frame_offset + frame_i,
-                "task_index":    0,
-                "next.done":     frame_i == n - 1,
-                "observation.state": obs_state,
-                "action":            action,
-            })
+            rows.append(
+                {
+                    "timestamp": float(t_vid - t0_ns) * 1e-9,
+                    "frame_index": frame_i,
+                    "episode_index": ep_idx,
+                    "index": self._global_frame_offset + frame_i,
+                    "task_index": 0,
+                    "next.done": frame_i == n - 1,
+                    "observation.state": obs_state,
+                    "action": action,
+                }
+            )
 
         return rows
 
@@ -309,8 +349,8 @@ class _RecordingSession:
         active_cams = [n for n in self.frame_timestamps if self.frame_timestamps[n]]
         if active_cams:
             # Pass A: timestamp-window intersection
-            t_start = max(self.frame_timestamps[n][0]  for n in active_cams)
-            t_end   = min(self.frame_timestamps[n][-1] for n in active_cams)
+            t_start = max(self.frame_timestamps[n][0] for n in active_cams)
+            t_end = min(self.frame_timestamps[n][-1] for n in active_cams)
             for name in active_cams:
                 ts = self.frame_timestamps[name]
                 i0 = next((i for i, t in enumerate(ts) if t >= t_start), 0)
@@ -329,9 +369,7 @@ class _RecordingSession:
             for name in active_cams:
                 n_keep = final_count
                 if n_keep < self.frame_counts[name]:
-                    src = os.path.join(
-                        self.tmp_dir, f"observation.images.{name}.mp4"
-                    )
+                    src = os.path.join(self.tmp_dir, f"observation.images.{name}.mp4")
                     tmp = src + ".trim.mp4"
                     ok = _trim_video_cv2(src, tmp, n_keep, cv2)
                     if ok and os.path.exists(tmp):
@@ -367,7 +405,10 @@ class _RecordingSession:
 
         # 4. Aligner l'état sur les frames vidéo et écrire le parquet
         n_states = len(self.state_rows)
-        print(f"[writer] Finalizing ep {ep_idx}: state_rows={n_states}, video_frames={self.frame_counts}", flush=True)
+        print(
+            f"[writer] Finalizing ep {ep_idx}: state_rows={n_states}, video_frames={self.frame_counts}",
+            flush=True,
+        )
         rows = self._build_aligned_rows()
         n_frames = len(rows)
         if rows:
@@ -378,13 +419,17 @@ class _RecordingSession:
                 rows,
             )
         else:
-            print(f"[writer] WARNING: 0 aligned rows — no parquet written. "
-                  f"states={n_states}, video_frames={self.frame_counts}", flush=True)
+            print(
+                f"[writer] WARNING: 0 aligned rows — no parquet written. "
+                f"states={n_states}, video_frames={self.frame_counts}",
+                flush=True,
+            )
 
         # 5. Mettre à jour les métadonnées du dataset
         task = self.metadata.get("language_instruction", "")
-        _update_meta(base_dir, ep_idx, task, n_frames, success,
-                     self._cam_dims, self.fps)
+        _update_meta(
+            base_dir, ep_idx, task, n_frames, success, self._cam_dims, self.fps
+        )
 
         # 6. Nettoyage du répertoire temporaire
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
@@ -403,6 +448,7 @@ class _RecordingSession:
 # Écriture parquet (LeRobot v2)
 # ------------------------------------------------------------------ #
 
+
 def _write_parquet(path: str, rows: list[dict]) -> None:
     import pyarrow as pa
     import pyarrow.parquet as pq
@@ -410,26 +456,24 @@ def _write_parquet(path: str, rows: list[dict]) -> None:
     if not rows:
         return
 
-    table = pa.table({
-        "timestamp":
-            pa.array([r["timestamp"] for r in rows], type=pa.float32()),
-        "frame_index":
-            pa.array([r["frame_index"] for r in rows], type=pa.int64()),
-        "episode_index":
-            pa.array([r["episode_index"] for r in rows], type=pa.int64()),
-        "index":
-            pa.array([r["index"] for r in rows], type=pa.int64()),
-        "task_index":
-            pa.array([r["task_index"] for r in rows], type=pa.int64()),
-        "next.done":
-            pa.array([r["next.done"] for r in rows], type=pa.bool_()),
-        "observation.state":
-            pa.array([r["observation.state"] for r in rows],
-                     type=pa.list_(pa.float32())),
-        "action":
-            pa.array([r["action"] for r in rows],
-                     type=pa.list_(pa.float32())),
-    })
+    table = pa.table(
+        {
+            "timestamp": pa.array([r["timestamp"] for r in rows], type=pa.float32()),
+            "frame_index": pa.array([r["frame_index"] for r in rows], type=pa.int64()),
+            "episode_index": pa.array(
+                [r["episode_index"] for r in rows], type=pa.int64()
+            ),
+            "index": pa.array([r["index"] for r in rows], type=pa.int64()),
+            "task_index": pa.array([r["task_index"] for r in rows], type=pa.int64()),
+            "next.done": pa.array([r["next.done"] for r in rows], type=pa.bool_()),
+            "observation.state": pa.array(
+                [r["observation.state"] for r in rows], type=pa.list_(pa.float32())
+            ),
+            "action": pa.array(
+                [r["action"] for r in rows], type=pa.list_(pa.float32())
+            ),
+        }
+    )
     pq.write_table(table, path, compression="snappy")
 
 
@@ -437,14 +481,15 @@ def _write_parquet(path: str, rows: list[dict]) -> None:
 # Métadonnées dataset (info.json + episodes.jsonl)
 # ------------------------------------------------------------------ #
 
+
 def _default_info(cam_dims: dict, fps: int) -> dict:
     features = {
-        "timestamp":     {"dtype": "float32", "shape": [1], "names": None},
-        "frame_index":   {"dtype": "int64",   "shape": [1], "names": None},
-        "episode_index": {"dtype": "int64",   "shape": [1], "names": None},
-        "index":         {"dtype": "int64",   "shape": [1], "names": None},
-        "task_index":    {"dtype": "int64",   "shape": [1], "names": None},
-        "next.done":     {"dtype": "bool",    "shape": [1], "names": None},
+        "timestamp": {"dtype": "float32", "shape": [1], "names": None},
+        "frame_index": {"dtype": "int64", "shape": [1], "names": None},
+        "episode_index": {"dtype": "int64", "shape": [1], "names": None},
+        "index": {"dtype": "int64", "shape": [1], "names": None},
+        "task_index": {"dtype": "int64", "shape": [1], "names": None},
+        "next.done": {"dtype": "bool", "shape": [1], "names": None},
         "observation.state": {
             "dtype": "float32",
             "shape": [_STATE_DIM],
@@ -524,17 +569,23 @@ def _update_meta(
 
     episodes_path = os.path.join(meta_dir, "episodes.jsonl")
     with open(episodes_path, "a") as f:
-        f.write(json.dumps({
-            "episode_index": ep_idx,
-            "tasks": [task],
-            "length": n_frames,
-            "success": success,
-        }) + "\n")
+        f.write(
+            json.dumps(
+                {
+                    "episode_index": ep_idx,
+                    "tasks": [task],
+                    "length": n_frames,
+                    "success": success,
+                }
+            )
+            + "\n"
+        )
 
 
 # ------------------------------------------------------------------ #
 # Compteurs pour reprendre un dataset existant
 # ------------------------------------------------------------------ #
+
 
 def _count_existing_episodes(base_dir: str) -> int:
     """Return the next free episode index = max existing index + 1.
@@ -549,7 +600,7 @@ def _count_existing_episodes(base_dir: str) -> int:
     for fn in os.listdir(data_dir):
         if fn.endswith(".parquet"):
             try:
-                indices.append(int(fn[len("episode_"):-len(".parquet")]))
+                indices.append(int(fn[len("episode_") : -len(".parquet")]))
             except ValueError:
                 pass
     return max(indices) + 1 if indices else 0
@@ -570,9 +621,10 @@ def _count_existing_frames(base_dir: str) -> int:
 # Boucle principale du processus écrivain
 # ------------------------------------------------------------------ #
 
+
 def writer_process(
-    rgb_channels: dict,   # {name: FrameChannel}
-    depth_channel,        # FrameChannel | None
+    rgb_channels: dict,  # {name: FrameChannel}
+    depth_channel,  # FrameChannel | None
     state_q: mp.Queue,
     cmd_q: mp.Queue,
     base_dir: str,
@@ -583,15 +635,14 @@ def writer_process(
     Polling à ~120 Hz (non-bloquant) pour drainer les canaux caméra.
     """
     session: "_RecordingSession | None" = None
-    ep_counter   = _count_existing_episodes(base_dir)
+    ep_counter = _count_existing_episodes(base_dir)
     total_frames = _count_existing_frames(base_dir)
 
     ch_names = list(rgb_channels.keys())
-    widths   = [c.width  for c in rgb_channels.values()]
-    heights  = [c.height for c in rgb_channels.values()]
+    widths = [c.width for c in rgb_channels.values()]
+    heights = [c.height for c in rgb_channels.values()]
 
     while True:
-
         # -- Traiter les commandes --
         try:
             cmd = cmd_q.get_nowait()
@@ -603,8 +654,14 @@ def writer_process(
                 ep_counter += 1
                 tmp_dir = os.path.join(base_dir, f".tmp_ep_{ep_idx:06d}")
                 session = _RecordingSession(
-                    tmp_dir, ep_idx, ch_names, widths, heights,
-                    fps, meta, global_frame_offset=total_frames,
+                    tmp_dir,
+                    ep_idx,
+                    ch_names,
+                    widths,
+                    heights,
+                    fps,
+                    meta,
+                    global_frame_offset=total_frames,
                 )
                 print(f"[writer] Episode {ep_idx} started.", flush=True)
 
@@ -614,9 +671,7 @@ def writer_process(
                     _drain_all(session, rgb_channels, depth_channel, state_q)
                     # Mettre à jour l'offset avant de passer au thread
                     ref_ch = ch_names[0] if ch_names else None
-                    total_frames += (
-                        session.frame_counts.get(ref_ch, 0) if ref_ch else 0
-                    )
+                    total_frames += session.frame_counts.get(ref_ch, 0) if ref_ch else 0
                     snap = session
                     threading.Thread(
                         target=snap.finalize,

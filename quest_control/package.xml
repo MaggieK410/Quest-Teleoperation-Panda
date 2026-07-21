@@ -8,12 +8,12 @@
   <license>Apache-2.0</license>
 
   <test_depend>ament_copyright</test_depend>
-  <test_depend>ament_flake8</test_depend>
-  <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
 
   <depend>agimus_msgs</depend>
   <depend>agimus_controller</depend>
+  <depend>agimus_controller_ros</depend>
+  <depend>agimus_demo_03_mpc_dummy_traj</depend>
   <depend>agimus_demo_08_collision_avoidance</depend>
   <depend>agimus_demos_common</depend>
   <depend>agimus_franka_msgs</depend>

@@ -8,12 +8,14 @@ import numpy as np
 class ControllerPose:
     matrix: np.ndarray  # shape (4,4)
 
+
 @dataclass
 class ControllerInput:
     joystick: tuple[float, float]
     index_trigger: float
     hand_trigger: float
     buttons: dict[str, bool]
+
 
 @dataclass
 class VRFrame:
@@ -25,26 +27,33 @@ class VRFrame:
 
 
 def decode_packet(data: bytes) -> VRFrame:
-    floats = struct.unpack('<66f', data)
+    floats = struct.unpack("<66f", data)
     f = iter(floats)
 
     def next_mat():
-        return np.array([ [next(f), next(f), next(f), next(f)],
-                          [next(f), next(f), next(f), next(f)],
-                          [next(f), next(f), next(f), next(f)],
-                          [next(f), next(f), next(f), next(f)] ], dtype=np.float32)
+        return np.array(
+            [
+                [next(f), next(f), next(f), next(f)],
+                [next(f), next(f), next(f), next(f)],
+                [next(f), next(f), next(f), next(f)],
+                [next(f), next(f), next(f), next(f)],
+            ],
+            dtype=np.float32,
+        )
 
-    head_pose  = ControllerPose(next_mat())
-    left_pose  = ControllerPose(next_mat())
+    head_pose = ControllerPose(next_mat())
+    left_pose = ControllerPose(next_mat())
     right_pose = ControllerPose(next_mat())
 
     # Analog values
-    left_joy   = (next(f), next(f))
-    right_joy  = (next(f), next(f))
+    left_joy = (next(f), next(f))
+    right_joy = (next(f), next(f))
     left_index, right_index, left_grip, right_grip = next(f), next(f), next(f), next(f)
 
     # Buttons
-    btnA, btnB, btnX, btnY, thumbL, thumbR, trigL, trigR, gripL, gripR = [int(next(f)) for _ in range(10)]
+    btnA, btnB, btnX, btnY, thumbL, thumbR, trigL, trigR, gripL, gripR = [
+        int(next(f)) for _ in range(10)
+    ]
 
     left_buttons = {
         "X": bool(btnX),
@@ -61,7 +70,7 @@ def decode_packet(data: bytes) -> VRFrame:
         "GripButton": bool(gripR),
     }
 
-    left_input  = ControllerInput(left_joy, left_index, left_grip, left_buttons)
+    left_input = ControllerInput(left_joy, left_index, left_grip, left_buttons)
     right_input = ControllerInput(right_joy, right_index, right_grip, right_buttons)
 
     return VRFrame(head_pose, left_pose, right_pose, left_input, right_input)
@@ -82,4 +91,4 @@ while True:
     frame = decode_packet(data)
     print("Head position:", frame.head_pose.matrix[:3, 3])
     print("Left joystick:", frame.left_input.joystick)
-    print("Right A button:", frame.right_input.buttons['A'])
+    print("Right A button:", frame.right_input.buttons["A"])
